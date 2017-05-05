@@ -1,0 +1,34 @@
+---
+title: "How to draw geologic map"
+author: "YiChun Sung"
+date: "2017年4月25日"
+output: html_document
+---
+
+## Library useful packages
+
+```{r, message=FALSE, warning=FALSE}
+library(magrittr)
+library(ggplot2)
+library(leaflet)
+library(knitr)
+library(maptools) # 協助讀取shp file
+library(sp)
+library(rgeos) 
+```
+
+
+# Get Taiwan region
+
+### Method 1 : read shpfile
+
+use function maptools::readShapeSpatial()
+
+```{r, message=FALSE, warning=FALSE}
+setwd('c://R_Application/map')
+Sys.setlocale(category = "LC_ALL", locale = "")
+TaiwanRegion97_shp <- readShapeSpatial("shpData/Taiwan_region_97TM2/97TM2.shp")
+plot(TaiwanRegion97_shp)
+
+
+```
