@@ -1,0 +1,34 @@
+---
+title: "R_notebook"
+author: "YiChun Sung"
+date: "2017年5月1日"
+output: html_document
+---
+
+### 隨意筆記
+
+## 一次讀多個.csv的方法
+
+```{r}
+fileList <- list.files(path = "C://testDOC/data/", pattern="*.csv") # path = 資料夾路徑
+for (i in 1:length(fileList)){
+  assign(fileList[i],  # fileList[i] : data frame 命名
+         read.csv(paste("C://testDOC/data/", fileList[i], sep=''))
+  )}
+
+```
+
+
+## format time data
+
+```{r}
+
+# for example "%Y"
+testTime <- c("2012-02-06 10:30:22", "2011-06-21 08:22:00", "2009-12-31 12:07:03")
+subY <- format(as.Date(testTime), format="%Y")
+
+# for example "%H"
+subH <- format(as.POSIXct(testTime), format="%H")
+
+```
+
