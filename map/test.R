@@ -21,7 +21,7 @@ ggplot(fault_shp)+ geom_map(data = TaiwanTown_map_dataFrame, aes(map_id = id), m
 
 ggplot(fault_shp)+ geom_map(data = fault_map_dataFrame, aes(map_id = id), map = fault_map_dataFrame) + expand_limits(x = fault_map_dataFrame$long, y = fault_map_dataFrame$lat)
 
-
+ggplot(Fault_DJ_shp)+ geom_map(data = Fault_DJ_dataFrame, aes(map_id = id), map = Fault_DJ_dataFrame) + expand_limits(x = Fault_DJ_dataFrame$long, y = Fault_DJ_dataFrame$lat)
 
 
 plotly_fault <-  plot_ly(data = TaiwanTown_map_dataFrame, x = TaiwanTown_map_dataFrame$long, y = TaiwanTown_map_dataFrame$lat, type = "scatter", mode = "markers") %>%
@@ -40,7 +40,23 @@ map <- leaflet()
 
 leaflet() %>% addTiles() %>% setView(lng=121.539366, lat=25.017326, zoom = 10) %>%
    addWMSTiles("http://gis.moeacgs.gov.tw/geo4oracle/mapagent/mapagent.fcgi",
-   #layers =  "WMS2009/LAYER/G67_A_50KA1PL_L",
+   layers =  "WMS2009/LAYER/250K/G67_TW_LIZA1A1PLL_L_1974_ALLSCALE",
    options = WMSTileOptions(format = "image/png", transparent = TRUE),
    attribution = "Taiwan"
    )
+
+packages_to_use <- c("devtools", "roxygen2")
+install.packages(packages_to_use)
+lapply(packages_to_use, library, character.only = TRUE)
+
+install.packages("devtools")
+devtools::install_github("yichunsung/transtwd97")
+library(transtwd97)
+
+setwd('c:\\')
+install('devtools')
+
+
+leaflet() %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
+  addPolygons(lng=Fault_DJ_WGS84$Longitude, lat = Fault_DJ_WGS84$Latitude)
+

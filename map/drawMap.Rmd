@@ -8,6 +8,7 @@ output: html_document
 ## Library useful packages
 
 ```{r, message=FALSE, warning=FALSE}
+
 library(magrittr)
 library(ggplot2)
 library(leaflet)
@@ -15,6 +16,18 @@ library(knitr)
 library(maptools) # 協助讀取shp file
 library(sp)
 library(rgeos) 
+
+```
+
+
+## 從GitHub引入我的套件
+
+```{r}
+#install.packages("devtools")
+library(devtools)
+#install_github("yichunsung/transtwd97")
+library(transtwd97)
+
 ```
 
 
@@ -24,11 +37,80 @@ library(rgeos)
 
 use function maptools::readShapeSpatial()
 
+#### Base Taiwan map
 ```{r, message=FALSE, warning=FALSE}
 setwd('c://R_Application/map')
-Sys.setlocale(category = "LC_ALL", locale = "")
+#Sys.setlocale(category = "LC_ALL", locale = "")
 TaiwanRegion97_shp <- readShapeSpatial("shpData/Taiwan_region_97TM2/97TM2.shp")
 plot(TaiwanRegion97_shp)
+
+
+```
+
+
+# fault no.SHP_F0012
+
+read Shp file and use ggplot2::fortify() to transform SpatialPolygonsDataFrame to data frame
+
+```{r, message=FALSE, warning=FALSE}
+setwd('c://R_Application/map')
+Fault_DJ_shp <- readShapeSpatial("shpData/fault data/SHP_F0012/F0012_TWD97.shp") # 大甲斷層
+Fault_DJ_dataFrame <- fortify(Fault_DJ_shp, region = "名稱") # 將SpatialPolygonsDataFrame 轉成Data.Frame (package 來源: ggplot2)
+TaiwanTown_map <- fortify(TaiwanRegion97_shp, region = "countyname") # 將SpatialPolygonsDataFrame 轉成Data.Frame (package 來源: ggplot2)
+```
+
+```{r}
+plot(Fault_DJ_shp)
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot_DJ_fault <- ggplot(Fault_DJ_shp)+ geom_map(data = Fault_DJ_dataFrame, aes(map_id = id), map = Fault_DJ_dataFrame) + expand_limits(x = Fault_DJ_dataFrame$long, y = Fault_DJ_dataFrame$lat)
+ggplot_DJ_fault
+
+```
+
+### 將TWD97 轉換成 WGS84
+
+
+```{r}
+
+Fault_DJ_WGS84 <- TWD97toWGS84(inputTWD97Y = Fault_DJ_dataFrame$lat, inputTWD97X = Fault_DJ_dataFrame$long)
+
+```
+
+### 畫在leaflet map上
+
+```{r}
+leaflet() %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
+  addPolygons(lng=Fault_DJ_WGS84$Longitude, lat = Fault_DJ_WGS84$Latitude)
+
+```
+
+
+
+```{r}
+
+TaiwanTown_map_WGS84 <- TWD97toWGS84(inputTWD97Y = TaiwanTown_map$lat, inputTWD97X = TaiwanTown_map$long)
+TaiwanTown_map_WGS84 <- cbind(TaiwanTown_map_WGS84, id = TaiwanTown_map$id) 
+
+```
+
+```{r}
+bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+pal <- colorBin("YlOrRd", domain = TaiwanTown_map_WGS84$id, bins = bins)
+
+
+leaflet(data = TaiwanTown_map_WGS84) %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
+  addPolygons(
+      lng=TaiwanTown_map_WGS84$Longitude, lat = TaiwanTown_map_WGS84$Latitude,
+      fillColor = ~pal(TaiwanTown_map_WGS84$id),
+      weight = 2,
+      opacity = 1,
+      color = "white",
+      dashArray = "3",
+      fillOpacity = 0.7)
 
 
 ```
