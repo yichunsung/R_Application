@@ -7,6 +7,16 @@ output: html_document
 
 ### 隨意筆記
 
+## install and library multiple packages
+```{r}
+packages_to_use <- c("devtools", "roxygen2")
+install.packages(packages_to_use)
+lapply(packages_to_use, library, character.only = TRUE)
+
+```
+
+
+
 ## 一次讀多個.csv的方法
 
 ```{r}

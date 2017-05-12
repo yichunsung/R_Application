@@ -47,8 +47,19 @@ plot(TaiwanRegion97_shp)
 
 ```
 
+### Method 2 : Get Data from GADM 
 
-# fault no.SHP_F0012
+use raster::getData() to get Taiwan map from GADM.org
+```{r}
+library(raster)
+twDist0 <- getData('GADM', country='TW', level=0)
+twDist1 <- getData('GADM', country='TW', level=1)
+twDist2 <- getData('GADM', country='TW', level=2)
+
+plot(twDist1)
+```
+
+### fault no.SHP_F0012
 
 read Shp file and use ggplot2::fortify() to transform SpatialPolygonsDataFrame to data frame
 
