@@ -59,6 +59,23 @@ twDist2 <- getData('GADM', country='TW', level=2)
 plot(twDist1)
 ```
 
+### Base map for Taiwan
+
+```{r}
+#ggplot() +
+  #geom_map(data=county2, map=county2, aes(x=long, y=lat, map_id=region), col="white", fill="grey")
+TaiwanRegion97 <- ggplot(TaiwanTown_map_WGS84_renew)+ geom_map(data = TaiwanTown_map_WGS84_renew, aes(map_id = id), col="black", fill="yellow", map = TaiwanTown_map_WGS84_renew) + expand_limits(x = TaiwanTown_map_WGS84_renew$long, y = TaiwanTown_map_WGS84_renew$lat)
+
+TaiwanRegion97
+```
+### plot_ly
+
+```{r}
+library(plotly)
+ggplotly(TaiwanRegion97)
+
+```
+
 ### fault no.SHP_F0012
 
 read Shp file and use ggplot2::fortify() to transform SpatialPolygonsDataFrame to data frame
@@ -77,8 +94,8 @@ plot(Fault_DJ_shp)
 
 ```{r, message=FALSE, warning=FALSE}
 
-ggplot_DJ_fault <- ggplot(Fault_DJ_shp)+ geom_map(data = Fault_DJ_dataFrame, aes(map_id = id), map = Fault_DJ_dataFrame) + expand_limits(x = Fault_DJ_dataFrame$long, y = Fault_DJ_dataFrame$lat)
-ggplot_DJ_fault
+ggplot_DJ_fault <- ggplot(Fault_DJ_shp)+ geom_map(data = Fault_DJ_dataFrame, aes(map_id = id), col="white", fill="grey", map = Fault_DJ_dataFrame) + expand_limits(x = Fault_DJ_dataFrame$long, y = Fault_DJ_dataFrame$lat)
+ggplotly(ggplot_DJ_fault)
 
 ```
 
@@ -105,23 +122,37 @@ leaflet() %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
 
 TaiwanTown_map_WGS84 <- TWD97toWGS84(inputTWD97Y = TaiwanTown_map$lat, inputTWD97X = TaiwanTown_map$long)
 TaiwanTown_map_WGS84 <- cbind(TaiwanTown_map_WGS84, id = TaiwanTown_map$id) 
+names(TaiwanTown_map_WGS84) <-c('lat', 'long', 'id')
+
+TaiwanTown_map_WGS84_renew <- data.frame(long = TaiwanTown_map_WGS84$long, lat = TaiwanTown_map_WGS84$lat, order =TaiwanTown_map$order, hole = TaiwanTown_map$hole, piece = TaiwanTown_map$piece, id = TaiwanTown_map$id, group = TaiwanTown_map$group)
 
 ```
 
+
+### Convert data.frame to geojson
 ```{r}
-bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
-pal <- colorBin("YlOrRd", domain = TaiwanTown_map_WGS84$id, bins = bins)
+
+install.packages("geojsonio")
+library(geojsonio)
 
 
-leaflet(data = TaiwanTown_map_WGS84) %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
-  addPolygons(
-      lng=TaiwanTown_map_WGS84$Longitude, lat = TaiwanTown_map_WGS84$Latitude,
-      fillColor = ~pal(TaiwanTown_map_WGS84$id),
+```
+
+
+```{r}
+bins <- c(0, 10, 20, 50, 100, 200, 500, 1000)
+pal <- colorQuantile("YlOrRd", NULL, n=8)
+
+
+leaflet(data = TaiwanTown_map_WGS84_renew) %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
+  addPolygons(data = TaiwanTown_map_WGS84_renew,
+      lng=TaiwanTown_map_WGS84_renew$long, lat = TaiwanTown_map_WGS84_renew$lat,
+      fillColor = "yellow",
       weight = 2,
       opacity = 1,
       color = "white",
       dashArray = "3",
-      fillOpacity = 0.7)
+      fillOpacity = 0)
 
 
 ```

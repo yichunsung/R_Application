@@ -3,6 +3,16 @@ plot(test_shpfile)
 test_2_shp <- readShapeSpatial("C:/Users/ycsung/Desktop/NCREE/ArcGis/map/Town67_region.shp")
 plot(test_2_shp)
 
+
+
+# convert data frame to Geojson
+
+stjson <- geojson_json(TaiwanTown_map_WGS84_renew, lat = 'lat', lon = 'long')
+
+geojson_json()
+
+leaflet(data = TaiwanTown_map_WGS84_renew) %>% addTiles() %>% setView(lng=120.6207, lat=24.33367, zoom = 10) %>%
+  addTopoJSON(stjson, weight = 1, color = "#444444", fill = FALSE)
 # data structure
 head(slot(test_2_shp,"data"))
 head(test_2_shp@polygons)
