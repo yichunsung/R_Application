@@ -1,0 +1,60 @@
+---
+title: "YMS Earthquake data"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(magrittr)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### 台北地區有感地震
+
+```{r}
+setwd('c://testDOC')
+# read data csv
+EQ_list <- read.csv("tp_eqList.csv")
+eqmap <- leaflet(data = EQ_list) %>%
+  setView(lng= 121.53, lat = 25.017318, zoom = 10) %>%
+  addProviderTiles("Hydda.Base") %>%
+  addCircleMarkers(~lng, ~lat, popup=~as.character(ML), radius = 5, weight = 1, opacity = 0.8, fill = TRUE, fillOpacity = 0.8)
+eqmap
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### 陽明山測站中有感地震
+
+```{r}
+setwd('c://testDOC')
+# read data csv
+EQ_list <- read.csv("tp_eqList.csv")
+YMS_EQ <- subset(EQ_list, EQ_list$YMS_int != "NA")
+YMS_EQ_map <- leaflet(data = YMS_EQ) %>%
+  setView(lng=121.5292, lat=25.1826, zoom = 8) %>%
+  addProviderTiles("Hydda.Base") %>%
+  #addCircleMarkers(~lng, ~lat, popup=~as.character(ML), radius = 5, weight = 1, opacity = 0.8, fill = TRUE, fillOpacity = 0.8) %>%
+  addCircles(lng= 121.5292, lat= 25.1826, weight = 1, radius = 100000)%>%
+  addCircles(lng=EQ_list$lng, lat=EQ_list$lat, weight = 1, radius = ~EQ_list$ML*500, color = "red", fillColor ="red", fill=TRUE, fillOpacity = 0.8)
+YMS_EQ_map
+
+
+```
+
+### Chart C
+
+```{r}
+
+```
+

@@ -1,0 +1,153 @@
+---
+title: "利用leaflet 做 GIS 專題"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(magrittr)
+library(ggplot2)
+library(leaflet)
+library(knitr)
+library(maptools) # 協助讀取shp file
+library(sp)
+library(rgeos) 
+library(devtools)
+#install_github("yichunsung/transtwd97")
+library(transtwd97)
+library(dplyr)
+library(plotly)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### 以陽明山為中心，半徑100KM的地震
+
+```{r, message=FALSE, warning=FALSE}
+setwd("c://R_Application/map")
+# 山腳斷層 shpfile
+SF_line_shp <- readShapeSpatial("shpData/fault data/SF-Fault/fault-line.shp")
+SF_line_dataFrame <- fortify(SF_line_shp) 
+SF_line_dataFrame_WGS84 <- TWD97toWGS84(inputTWD97Y = SF_line_dataFrame$lat, 
+                                        inputTWD97X = SF_line_dataFrame$long)
+
+# 台灣鄉鎮圖
+TaiwanRegion97_shp <- readShapeSpatial("shpData/Taiwan_region_97TM2/97TM2.shp")
+# use gglot2::fortify to make a new data frame
+TaiwanTown_map <- fortify(TaiwanRegion97_shp, region = "townname") 
+
+# convert to WGS84
+TaiwanTown_map_WGS84 <- TWD97toWGS84(inputTWD97Y = TaiwanTown_map$lat, inputTWD97X = TaiwanTown_map$long)
+# cbind id into df
+TaiwanTown_map_WGS84 <- cbind(TaiwanTown_map_WGS84, id = TaiwanTown_map$id) 
+names(TaiwanTown_map_WGS84) <-c('lat', 'long', 'id')
+
+# reset a fortify style data frame
+TaiwanTown_map_WGS84_renew <- data.frame(long = TaiwanTown_map_WGS84$long, lat = TaiwanTown_map_WGS84$lat, order =TaiwanTown_map$order, hole = TaiwanTown_map$hole, piece = TaiwanTown_map$piece, id = TaiwanTown_map$id, group = TaiwanTown_map$group)
+
+dataframeToPolygons <- function(df, latCol, lngCol, idCol) {
+  SpatialPolygons(lapply(unique(df[[idCol]]), function(id) {
+    Polygons(list(Polygon(as.matrix(
+      df[df[[idCol]] == id, c(lngCol, latCol)]
+    ))), id)
+  }))
+}
+
+changetoPolygons <- dataframeToPolygons(TaiwanTown_map_WGS84_renew, "lat", "long", "group")
+
+
+# YMS data
+EQ_list <- read.csv("YMS_eq/tp_eqList.csv")
+YMS_EQ <- subset(EQ_list, EQ_list$YMS_int != "NA")
+olng <- 121.5292
+olat <- 25.1826
+otwd97 <- WGS84toTWD97(inputLat = olat, inputLng = olng)
+eqtwd97 <- WGS84toTWD97(inputLat = YMS_EQ$lat, inputLng = YMS_EQ$lng)
+disEQ <- distance_TWD97(origin_TWD97_X = 303338.7, 
+                        origin_TWD97_Y = 2786108,
+                        observation_TWD97_X = eqtwd97$Longitude_TWD97_X, 
+                        observation_TWD97_Y = eqtwd97$Latitude_TWD97_Y)
+
+YMS_EQ <- cbind(YMS_EQ, disEQ)
+YMS_EQ_more120 <- subset(YMS_EQ, YMS_EQ$disEQ>120)
+YMS_EQ_120 <- subset(YMS_EQ, YMS_EQ$disEQ<=120)
+
+# map
+
+mapforA <- leaflet(data = YMS_EQ) %>% 
+ # addProviderTiles("Esri.WorldImagery") %>% 
+  #addProviderTiles("Stamen.Toner",
+   #               options = providerTileOptions(opacity = 0.4))%>%
+  setView(lng=121.5292, lat=25.1826, zoom = 8) %>%
+  addPolygons(data= changetoPolygons,
+              fillColor = "yellow", 
+              weight = 2,                             
+              opacity = 1,                             
+              color = "grey",                             
+              dashArray = "3",                             
+              fillOpacity = 0.3) %>%
+  addCircles(lng= 121.5292, 
+             lat= 25.1826, 
+             weight = 1, 
+             radius = 100000)%>%
+  addCircleMarkers(lng=YMS_EQ$lng, 
+                   lat=YMS_EQ$lat, 
+                   weight = 1, 
+                   radius = ~YMS_EQ$ML, 
+                   color = "red", 
+                   fillColor ="red", 
+                   fill=TRUE, 
+                   fillOpacity = 0.8) %>%
+  addCircleMarkers(lng=YMS_EQ_more120$lng, 
+                   lat=YMS_EQ_more120$lat, 
+                   weight = 1, 
+                   radius = ~YMS_EQ_more120$ML, 
+                   color = "blue", 
+                   fillColor ="blue", 
+                   fill=TRUE, 
+                   fillOpacity = 0.8) %>%
+  addPolylines(lng=SF_line_dataFrame_WGS84$Longitude, 
+               lat = SF_line_dataFrame_WGS84$Latitude,
+               opacity = 1,                             
+               color = "black",                             
+               dashArray = "3",
+               popup = "山腳斷層") 
+  
+
+mapforA
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### 120km以內之地震資料
+
+```{r}
+library(knitr)
+YMS_table <- data.frame(time = YMS_EQ_120$time, Depth = YMS_EQ_120$depth, ML = YMS_EQ_120$ML)
+kable(YMS_table[1:69, ], caption = "半徑12KM內之地震")
+
+```
+
+### 120km以內之地震規模與震度作圖
+
+```{r}
+YMS_EQ_plotly <- plot_ly(data = YMS_EQ_120, 
+                         x=YMS_EQ_120$time, 
+                         y=YMS_EQ_120$YMS_int, 
+                         type = "bar", 
+                         name = "int") %>%
+  add_trace(data = YMS_EQ_120, 
+            x = YMS_EQ_120$time,
+            y = YMS_EQ_120$ML, 
+            type = "scatter", 
+            mode = "markers", 
+            name = "ML")
+YMS_EQ_plotly
+```
+

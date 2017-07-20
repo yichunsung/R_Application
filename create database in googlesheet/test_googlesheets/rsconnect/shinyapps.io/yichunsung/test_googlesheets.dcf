@@ -1,0 +1,10 @@
+name: test_googlesheets
+title: test_googlesheets
+account: yichunsung
+server: shinyapps.io
+appId: 193108
+bundleId: 886187
+url: https://yichunsung.shinyapps.io/test_googlesheets/
+when: 1498724548.54889
+asMultiple: FALSE
+asStatic: FALSE

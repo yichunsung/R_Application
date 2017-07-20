@@ -1,0 +1,6 @@
+install.packages('RMySQL')
+library(RMySQL)
+con <- dbConnect(MySQL(), user="root", password="FCJ,51w48-I0yh", dbname="soilgasdb", host="61.56.2.140")
+dbSendQuery(con,"SET NAMES utf8")
+dbListFields(con, "customers")    
+data.all <- dbReadTable(con, "orders")
